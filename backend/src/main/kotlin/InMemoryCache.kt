@@ -34,10 +34,9 @@ class InMemoryCache {
 
             return mutableMap
         }
+
+        fun clearCache() {
+            cache.clear()
+        }
     }
-
-
-
-
-
 }

@@ -1,32 +1,63 @@
 import java.time.LocalDate
-import java.util.logging.Level
 
-val nearEarthObjectsFetcher = NearEarthObjectsFetcher()
+fun findClosestNearEarthObjectToEarth(fromDate: LocalDate, toDate: LocalDate): NearEarthObject {
+    return findOptimizedNearEarthObject(fromDate, toDate, ::getCloserNearEarthObject)
+}
 
-// todo: split logic out of this function, so the finding smallest object function can be tested
-fun findClosestObjectToEarthBetweenDates(fromDate: LocalDate, toDate: LocalDate): NearEarthObject? {
+fun findLargestNearEarthObject(fromDate: LocalDate, toDate: LocalDate): NearEarthObject {
+    return findOptimizedNearEarthObject(fromDate, toDate, ::getBiggerNearEarthObject)
+}
 
-    val mapDateToNearEarthObjects = if(InMemoryCache.containsDateRange(fromDate, toDate)) {
-        InMemoryCache.getCachedData(fromDate, toDate)
+private fun getCloserNearEarthObject(o1: NearEarthObject, o2: NearEarthObject): NearEarthObject {
+    return if (o1.missDistanceKm <= o2.missDistanceKm) {
+        o1
     } else {
-        nearEarthObjectsFetcher.fetchNearEarthObjectsFromNasa(fromDate, toDate)
-            .also { InMemoryCache.updateCache(it, fromDate, toDate) }
+        o2
     }
+}
 
-    var closestNearEarthObject: NearEarthObject? = null
+private fun getBiggerNearEarthObject(o1: NearEarthObject, o2: NearEarthObject): NearEarthObject {
+    return if (o1.estimatedDiameterMeanKm >= o2.estimatedDiameterMeanKm) {
+        o1
+    } else {
+        o2
+    }
+}
+
+private fun findOptimizedNearEarthObject(
+    fromDate: LocalDate,
+    toDate: LocalDate,
+    optimizeForFunc: (NearEarthObject, NearEarthObject) -> NearEarthObject
+): NearEarthObject {
+
+    val mapDateToNearEarthObjects = readNearEarthObjectsDataFromCacheOrFetchFromApi(fromDate, toDate)
+
+    var minNearEarthObject: NearEarthObject? = null
 
     for ((_, listOfNearEarthObjects) in mapDateToNearEarthObjects) {
         for (nearEarthObject in listOfNearEarthObjects) {
-            if (closestNearEarthObject === null) {
-                closestNearEarthObject = nearEarthObject
+            minNearEarthObject = if (minNearEarthObject === null) {
+                nearEarthObject
             } else {
-                if (nearEarthObject.missDistanceKm < closestNearEarthObject.missDistanceKm) {
-                    closestNearEarthObject = nearEarthObject
-                }
+                optimizeForFunc(minNearEarthObject, nearEarthObject)
             }
         }
     }
 
-    return closestNearEarthObject
+    return minNearEarthObject!!
+}
+
+
+private fun readNearEarthObjectsDataFromCacheOrFetchFromApi(
+    fromDate: LocalDate,
+    toDate: LocalDate
+): Map<LocalDate, List<NearEarthObject>> {
+
+    return if (InMemoryCache.containsDateRange(fromDate, toDate)) {
+        InMemoryCache.getCachedData(fromDate, toDate)
+    } else {
+        NearEarthObjectsFetcher.fetchNearEarthObjectsFromNasa(fromDate, toDate)
+            .also { InMemoryCache.updateCache(it, fromDate, toDate) }
+    }
 }
 

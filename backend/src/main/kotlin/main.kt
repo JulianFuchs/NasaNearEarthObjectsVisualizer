@@ -21,31 +21,27 @@ fun main(args: Array<String>) {
     println("Starting Nasa Near Earth Object Visualizer Backend")
 
     val server: HttpServer = HttpServer.create(InetSocketAddress(8000), -1)
-    server.createContext("/NasaNearEarthObjects/closest", ClosestObjectsHttpHandler())
+    server.createContext("/NasaNearEarthObjects/closest", ClosestObjectHttpHandler())
+    server.createContext("/NasaNearEarthObjects/largest", LargestObjectHttpHandler())
     server.executor = null // creates a default executor
 
     server.start()
-
-//    val nearEarthObjectsFetcher = NearEarthObjectsFetcher()
-//    nearEarthObjectsFetcher.fetchNearEarthObjects(LocalDate.of(2015, 12, 19), LocalDate.of(2015, 12, 26))
-
 }
 
-internal class ClosestObjectsHttpHandler : HttpHandler {
+
+// todo: dry the http handlers up
+internal class ClosestObjectHttpHandler : HttpHandler {
     @Throws(IOException::class)
     override fun handle(httpExchange: HttpExchange) {
-
         try {
-            val inputStream = httpExchange.requestBody
-
-            val query = httpExchange.requestURI.query // "from=2020-01-01&to=2020-01-02"
+            val query = httpExchange.requestURI.query
 
             val (fromLocalDate, toLocalDate) = extractFromAndToFromQuery(query)
 
             logger.log(Level.INFO, "Received closest object request for range $fromLocalDate to $toLocalDate")
 
             // todo: fix !!
-            val closestNearEarthObject = findClosestObjectToEarthBetweenDates(fromLocalDate, toLocalDate)!!
+            val closestNearEarthObject = findClosestNearEarthObjectToEarth(fromLocalDate, toLocalDate)!!
 
             val response = Gson().toJson(closestNearEarthObject)
 
@@ -55,33 +51,61 @@ internal class ClosestObjectsHttpHandler : HttpHandler {
             outputStream.close()
         } catch (e: Exception) {
             // todo: doesn't work for some reason
-            println(e)
+            logger.log(Level.SEVERE, e.toString())
             throw e
         }
     }
+}
 
-    private fun extractFromAndToFromQuery(query: String): Pair<LocalDate, LocalDate> {
-        val rex = Regex("from=(.*)&to=(.*)")
-        val m = rex.find(query)
+internal class LargestObjectHttpHandler : HttpHandler {
+    @Throws(IOException::class)
+    override fun handle(httpExchange: HttpExchange) {
 
-        if (m === null) {
-            // todo: add logger, do proper error logging
-            println("Received invalid query parameters. Query was: $query")
-            throw Error("Received invalid query parameters. Query was: $query")
+        try {
+            val query = httpExchange.requestURI.query
+
+            val (fromLocalDate, toLocalDate) = extractFromAndToFromQuery(query)
+
+            logger.log(Level.INFO, "Received largest object request for range $fromLocalDate to $toLocalDate")
+
+            // todo: fix !!
+            val closestNearEarthObject = findLargestNearEarthObject(fromLocalDate, toLocalDate)!!
+
+            val response = Gson().toJson(closestNearEarthObject)
+
+            httpExchange.sendResponseHeaders(200, response.length.toLong())
+            val outputStream = httpExchange.responseBody
+            outputStream.write(response.toByteArray())
+            outputStream.close()
+        } catch (e: Exception) {
+            // todo: doesn't work for some reason
+            logger.log(Level.SEVERE, e.toString())
+            throw e
         }
-
-        val fromString = m.groups[1]?.value
-        val toString = m.groups[2]?.value
-
-        if (fromString.isNullOrBlank() || toString.isNullOrBlank()) {
-            throw Error("Received invalid query parameters. Query was: $query")
-        }
-
-        val fromLocalDate = LocalDate.parse(fromString)
-        val toLocalDate = LocalDate.parse(toString)
-
-        return Pair(fromLocalDate, toLocalDate)
     }
+}
+
+private fun extractFromAndToFromQuery(query: String): Pair<LocalDate, LocalDate> {
+    val rex = Regex("from=(.*)&to=(.*)")
+    val m = rex.find(query)
+
+    if (m === null) {
+        // todo: add logger, do proper error logging
+        println("Received invalid query parameters. Query was: $query")
+        throw Error("Received invalid query parameters. Query was: $query")
+    }
+
+    val fromString = m.groups[1]?.value
+    val toString = m.groups[2]?.value
+
+    if (fromString.isNullOrBlank() || toString.isNullOrBlank()) {
+        throw Error("Received invalid query parameters. Query was: $query")
+    }
+
+    val fromLocalDate = LocalDate.parse(fromString)
+    val toLocalDate = LocalDate.parse(toString)
+
+    return Pair(fromLocalDate, toLocalDate)
 }
 
 
