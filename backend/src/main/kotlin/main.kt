@@ -17,47 +17,22 @@ import java.util.logging.Logger
 
 val logger: Logger = Logger.getLogger("Global Logger").also{ it.level = Level.ALL }
 
+enum class OperationMode {
+    FIND_CLOSEST, FIND_LARGEST
+}
+
 fun main(args: Array<String>) {
     println("Starting Nasa Near Earth Object Visualizer Backend")
 
     val server: HttpServer = HttpServer.create(InetSocketAddress(8000), -1)
-    server.createContext("/NasaNearEarthObjects/closest", ClosestObjectHttpHandler())
-    server.createContext("/NasaNearEarthObjects/largest", LargestObjectHttpHandler())
+    server.createContext("/NasaNearEarthObjects/closest", RequestHandler(OperationMode.FIND_CLOSEST))
+    server.createContext("/NasaNearEarthObjects/largest", RequestHandler(OperationMode.FIND_LARGEST))
     server.executor = null // creates a default executor
 
     server.start()
 }
 
-
-// todo: dry the http handlers up
-internal class ClosestObjectHttpHandler : HttpHandler {
-    @Throws(IOException::class)
-    override fun handle(httpExchange: HttpExchange) {
-        try {
-            val query = httpExchange.requestURI.query
-
-            val (fromLocalDate, toLocalDate) = extractFromAndToFromQuery(query)
-
-            logger.log(Level.INFO, "Received closest object request for range $fromLocalDate to $toLocalDate")
-
-            // todo: fix !!
-            val closestNearEarthObject = findClosestNearEarthObjectToEarth(fromLocalDate, toLocalDate)!!
-
-            val response = Gson().toJson(closestNearEarthObject)
-
-            httpExchange.sendResponseHeaders(200, response.length.toLong())
-            val outputStream = httpExchange.responseBody
-            outputStream.write(response.toByteArray())
-            outputStream.close()
-        } catch (e: Exception) {
-            // todo: doesn't work for some reason
-            logger.log(Level.SEVERE, e.toString())
-            throw e
-        }
-    }
-}
-
-internal class LargestObjectHttpHandler : HttpHandler {
+internal class RequestHandler(val operationMode: OperationMode) : HttpHandler {
     @Throws(IOException::class)
     override fun handle(httpExchange: HttpExchange) {
 
@@ -66,10 +41,16 @@ internal class LargestObjectHttpHandler : HttpHandler {
 
             val (fromLocalDate, toLocalDate) = extractFromAndToFromQuery(query)
 
-            logger.log(Level.INFO, "Received largest object request for range $fromLocalDate to $toLocalDate")
-
-            // todo: fix !!
-            val closestNearEarthObject = findLargestNearEarthObject(fromLocalDate, toLocalDate)!!
+            val closestNearEarthObject = when(operationMode) {
+                OperationMode.FIND_CLOSEST -> {
+                    logger.log(Level.INFO, "Received closest object request for range $fromLocalDate to $toLocalDate")
+                    findClosestNearEarthObjectToEarth(fromLocalDate, toLocalDate)!!
+                }
+                OperationMode.FIND_LARGEST -> {
+                    logger.log(Level.INFO, "Received largest object request for range $fromLocalDate to $toLocalDate")
+                    findLargestNearEarthObject(fromLocalDate, toLocalDate)
+                }
+            }
 
             val response = Gson().toJson(closestNearEarthObject)
 
@@ -90,8 +71,7 @@ private fun extractFromAndToFromQuery(query: String): Pair<LocalDate, LocalDate>
     val m = rex.find(query)
 
     if (m === null) {
-        // todo: add logger, do proper error logging
-        println("Received invalid query parameters. Query was: $query")
+        logger.log(Level.SEVERE,"Received invalid query parameters. Query was: $query")
         throw Error("Received invalid query parameters. Query was: $query")
     }
 

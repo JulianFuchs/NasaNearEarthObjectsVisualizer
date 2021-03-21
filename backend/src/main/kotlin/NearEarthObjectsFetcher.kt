@@ -6,23 +6,19 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.time.LocalDate
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.logging.Level
 import java.util.concurrent.Executors
-
-import java.util.concurrent.ExecutorService
-import kotlin.concurrent.thread
 
 
 class NearEarthObjectsFetcher {
 
     companion object ApiFetcher {
-        private val nasaNeoFeedUrl = "https://api.nasa.gov/neo/rest/v1/feed"
+        private const val nasaNeoFeedUrl = "https://api.nasa.gov/neo/rest/v1/feed"
         // todo: (opt) read this from an environment variable
-        private val apiKey = "ik3yhAzzg4zF6zYtBlry5Ti6NhIDxbAEdaSF4h8I"
+        private const val apiKey = "ik3yhAzzg4zF6zYtBlry5Ti6NhIDxbAEdaSF4h8I"
 
-        private var threadPool = Executors.newFixedThreadPool(5)
+        private var threadPool = Executors.newFixedThreadPool(10)
 
         val httpClient: HttpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
@@ -33,24 +29,32 @@ class NearEarthObjectsFetcher {
 
             logger.log(Level.INFO, "Fetching data from Nasa NEO Api for date range $from to $to" )
 
-//            val allMaps = mutableMapOf<LocalDate, List<NearEarthObject>>()
+            val datesToNearEarthObjects = mutableMapOf<LocalDate, List<NearEarthObject>>()
 
             val intervals = splitDateRangeInto8DayIntervals(from, to)
 
             val countDownLatch = CountDownLatch(intervals.size)
 
             for (interval in intervals) {
-                val runnable = FetchDataFromApiAndSaveToCacheTask(interval.first, interval.second, countDownLatch)
+                val runnable = FetchDataFromApi(
+                    interval.first,
+                    interval.second,
+                    countDownLatch,
+                    datesToNearEarthObjects)
                 threadPool.execute(runnable)
             }
 
             countDownLatch.await()
 
-            return InMemoryCache.getCachedData(from, to)
+            return datesToNearEarthObjects
         }
     }
 
-    class FetchDataFromApiAndSaveToCacheTask(private val from: LocalDate, private val to: LocalDate, val countDownLatch: CountDownLatch): Runnable {
+    class FetchDataFromApi(private val from: LocalDate,
+                           private val to: LocalDate,
+                           private val countDownLatch: CountDownLatch,
+                           private val datesToNearEarthObjects: MutableMap<LocalDate, List<NearEarthObject>>,
+    ): Runnable {
 
         override fun run() {
             val uri = URI.create("$nasaNeoFeedUrl?start_date=$from&end_date=$to&api_key=$apiKey")
@@ -75,7 +79,7 @@ class NearEarthObjectsFetcher {
 
             val dateToNearEarthObjectsMap = convertNasaNeoApiDataToDateToNearEarthObjectsMap(nasaNeoApiData)
 
-            InMemoryCache.updateCache(dateToNearEarthObjectsMap, from, to)
+            datesToNearEarthObjects.putAll(dateToNearEarthObjectsMap)
 
             countDownLatch.countDown()
         }
