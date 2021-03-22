@@ -25,7 +25,8 @@ intervals separately and then stored in the cache.
 - The in memory caching implemented now is very rudimentary. Using some mainstream in memory database like Redis
 would be really nice
 - If this was a real product, it should be tested more thoroughly
-- Error handling and fault recovery could be improved
+- Error handling and fault recovery (there is no retrying now, so receiving a server error from $nasa crashes the
+  application)
 - Allow configuring the project, i.e., which port to start on, in a configuration file or by environment variables
 
 
