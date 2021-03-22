@@ -1,3 +1,4 @@
+import java.lang.Exception
 import java.time.LocalDate
 import java.util.logging.Level
 
@@ -28,7 +29,10 @@ class InMemoryCache {
             var date = from
 
             while(date.isBefore(to.plusDays(1))) {
-                mutableMap[date] = cache[date]!!
+                val cachedValue = cache[date]
+                if (cachedValue != null) {
+                    mutableMap[date] = cachedValue
+                }
                 date = date.plusDays(1)
             }
 

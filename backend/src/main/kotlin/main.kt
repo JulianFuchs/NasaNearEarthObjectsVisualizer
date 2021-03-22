@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
     server.start()
 }
 
-internal class RequestHandler(val operationMode: OperationMode) : HttpHandler {
+internal class RequestHandler(private val operationMode: OperationMode) : HttpHandler {
     @Throws(IOException::class)
     override fun handle(httpExchange: HttpExchange) {
 
@@ -54,12 +54,12 @@ internal class RequestHandler(val operationMode: OperationMode) : HttpHandler {
 
             val response = Gson().toJson(closestNearEarthObject)
 
+            httpExchange.responseHeaders.add("Access-Control-Allow-Origin", "*");
             httpExchange.sendResponseHeaders(200, response.length.toLong())
             val outputStream = httpExchange.responseBody
             outputStream.write(response.toByteArray())
             outputStream.close()
         } catch (e: Exception) {
-            // todo: doesn't work for some reason
             logger.log(Level.SEVERE, e.toString())
             throw e
         }

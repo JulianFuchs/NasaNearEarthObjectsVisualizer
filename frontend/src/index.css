@@ -1,13 +1,25 @@
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    background-color: lightblue;
+    font-family: Arial, Helvetica, sans-serif;
+    border-style: solid;
+    border-width: 1px;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.Wrap {
+    background-color: lightblue;
+    display: flex;
+    flex: row;
+}
+
+.NearEarthObjectVisualizer {
+    background-color: lightskyblue;
+    border-style: solid;
+    border-width: 1px;
+    width: 50%;
+    padding-left: 25px
+}
+
+.NearEarthObjectDisplay p {
+    color: darkblue;
+    margin: 0
 }
