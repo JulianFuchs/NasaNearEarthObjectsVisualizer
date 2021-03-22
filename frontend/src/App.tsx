@@ -3,7 +3,6 @@ import logo from './logo.svg';
 import { isPropertySignature } from 'typescript';
 import { NearEarthObject, OperationMode } from './Types';
 import NearEarthObjectVisualizer from './NearEarthObjectVisualizer';
-import { Alert } from 'react-bootstrap';
 
 function App() {
   return (
