@@ -5,6 +5,13 @@ import java.util.logging.Level
 /**
 This is a placeholder implementation for a very basic cache. Would be cool to replace this with for example Redis at
 some point.
+
+ Todo:
+    - The caching is very simplistic, and the check for seeing if a range is cached or not returns only true or false.
+        It would be a large improvement if the cache would tell you for a given range, how much of it is already in
+        the cache and what dates still need to be fetched from the api.
+    - There is no Time To Live or similar configured, it will just keep all the data that is fetched forever which could
+        lead to memory problems. It would be good to clear the cache from time to time or remove old entries or similar
  */
 class InMemoryCache {
 

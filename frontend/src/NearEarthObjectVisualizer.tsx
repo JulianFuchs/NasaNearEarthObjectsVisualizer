@@ -2,6 +2,7 @@ import { useState, useRef } from "react"
 import { NearEarthObjectDisplay } from "./NearEarthObjectDisplay"
 import { NearEarthObject, OperationMode } from "./Types"
 import axios from 'axios';
+import InputAlert from "./InputAlert";
 
 export default function NearEarthObjectVisualizer({mode}: {mode: OperationMode}) {
 
@@ -16,9 +17,6 @@ export default function NearEarthObjectVisualizer({mode}: {mode: OperationMode})
         estimatedDiameterMeanKm: 0.0,
         nasaJplUrl: "Loading..."
     }
-
-    let fromDateRef= useRef<HTMLInputElement>()
-    let toDateRef = useRef<HTMLInputElement>()
 
     let [fromDate, setFromDate] = useState("<enter from date>")
     let [toDate, setToDate] = useState("<enter to date>")
@@ -40,23 +38,11 @@ export default function NearEarthObjectVisualizer({mode}: {mode: OperationMode})
         return operation
     }
 
-    function isDateInputValid(input: string): boolean {
-        return true
-    }
-
     function fetchNearEarthObjectFromBackend(event) {
 
         setNearEearthObject(emptyNearEarthObject)
 
-        const newFrom = fromDateRef.current.value
-        if (newFrom === '') return
-        setFromDate(newFrom)
-
-        const newTo = toDateRef.current.value
-        if (newTo === '') return
-        setToDate(newTo)
-
-        axios.get(`http://localhost:8000/NasaNearEarthObjects/${getOperation(mode)}?from=${newFrom}&to=${newTo}`)
+        axios.get(`http://localhost:8000/NasaNearEarthObjects/${getOperation(mode)}?from=${fromDate}&to=${toDate}`)
         .then(res => {
           const nearEarthObject = res.data;
           setNearEearthObject(nearEarthObject)
@@ -64,17 +50,26 @@ export default function NearEarthObjectVisualizer({mode}: {mode: OperationMode})
         .catch( e => console.log(e))
     }
 
+    function handleFromDateChange(event) {
+        setFromDate(event.target.value)
+    }
+
+    function handleToDateChange(event) {
+        setToDate(event.target.value)
+    }
+
     return (
-        <div className="NearEarthObjectVisualizer"> 
+        <div className="NearEarthObjectVisualizer">
             <DisplayHeader mode={mode} />
             <h3> Specify time interval:</h3>
             <div>
-                <p>FromDate: <input ref={fromDateRef} type="text"/></p>
-                <p>ToDate: <input ref={toDateRef} type="text"/></p>
+                <p>FromDate: <input onChange={handleFromDateChange} type="text" value={fromDate}/></p>
+                <p>ToDate: <input onChange={handleToDateChange} type="text" value={toDate}/></p>
             </div>
             <button onClick={fetchNearEarthObjectFromBackend}>Find {getOperation(mode)} Near Earth Object</button>
             <h3>Near Earth Object from {fromDate} to {toDate}</h3>
             <NearEarthObjectDisplay nearEarthObject={nearEarthObj} />
+            <InputAlert fromInput={fromDate} toInput={toDate} />
         </div>
     )
 }

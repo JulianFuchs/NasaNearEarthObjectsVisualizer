@@ -15,7 +15,7 @@ class NearEarthObjectsFetcher {
 
     companion object ApiFetcher {
         private const val nasaNeoFeedUrl = "https://api.nasa.gov/neo/rest/v1/feed"
-        // todo: (opt) read this from an environment variable
+        // todo: read this from an environment variable or some configuration file
         private const val apiKey = "ik3yhAzzg4zF6zYtBlry5Ti6NhIDxbAEdaSF4h8I"
 
         private var threadPool = Executors.newFixedThreadPool(10)

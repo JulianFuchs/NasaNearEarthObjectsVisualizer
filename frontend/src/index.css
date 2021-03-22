@@ -23,3 +23,8 @@ body {
     color: darkblue;
     margin: 0
 }
+
+.Alert {
+    background-color: lightsalmon;
+    font-weight: bold;
+}

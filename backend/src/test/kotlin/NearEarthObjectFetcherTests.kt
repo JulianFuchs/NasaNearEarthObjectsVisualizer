@@ -3,7 +3,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 
-
 class NearEarthObjectFetcherTests {
 
     class SplitDateRangeTests {

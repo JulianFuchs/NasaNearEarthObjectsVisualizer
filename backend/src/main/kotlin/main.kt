@@ -24,6 +24,7 @@ enum class OperationMode {
 fun main(args: Array<String>) {
     println("Starting Nasa Near Earth Object Visualizer Backend")
 
+    // todo: allow the port to be set via environment variable or configuration file
     val server: HttpServer = HttpServer.create(InetSocketAddress(8000), -1)
     server.createContext("/NasaNearEarthObjects/closest", RequestHandler(OperationMode.FIND_CLOSEST))
     server.createContext("/NasaNearEarthObjects/largest", RequestHandler(OperationMode.FIND_LARGEST))
