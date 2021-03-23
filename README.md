@@ -56,6 +56,7 @@ First clone the project from github. Then run the following steps in order:
 
 - Go to the `/backend` folder in the project directory with the terminal and run `./gradlew run`. This will start up the
   server on port 8000
-- Go to the `/frontend` folder in the project directory with the terminal and run `npm run start`. This will start the
+- Go to the `/frontend` folder in the project directory with the terminal and first install the dependencies with
+  `npm install` and then run the frontend by running `npm run start`. This will start the
 frontend on port 3000.
 - Open `http://localhost:3000/` in a browser and start using the Nasa Near Earth Objects Visualizer
